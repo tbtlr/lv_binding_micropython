@@ -1,6 +1,6 @@
 /**
  * @file lv_conf.h
- * Configuration file for v9.1.0
+ * Configuration file for v9.2.0
  */
 
 /*
@@ -923,6 +923,17 @@ extern void mp_lv_init_gc();
     #define LV_X11_RENDER_MODE_PARTIAL 1  /*Partial render mode (preferred)*/
     #define LV_X11_RENDER_MODE_DIRECT  0  /*direct render mode*/
     #define LV_X11_RENDER_MODE_FULL    0  /*Full render mode*/
+#endif
+
+/*Use Wayland to open a window and handle input on Linux or BSD desktops */
+#ifdef MICROPY_WAYLAND
+    #define LV_USE_WAYLAND MICROPY_WAYLAND
+#else
+    #define LV_USE_WAYLAND 0
+#endif
+#if LV_USE_WAYLAND
+    #define LV_WAYLAND_WINDOW_DECORATIONS   0    /*Draw client side window decorations only necessary on Mutter/GNOME*/
+    #define LV_WAYLAND_WL_SHELL             0    /*Use the legacy wl_shell protocol instead of the default XDG shell*/
 #endif
 
 /*Driver for /dev/fb*/
