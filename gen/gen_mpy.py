@@ -2456,9 +2456,10 @@ def build_mp_func_arg(arg, index, func, obj_name):
     # print('/* --> ARG: %s */' % arg)
     # print('/* --> FIRST ARG: %s */' % first_arg)
     if callback:
-        # Callback is supported in two modes:
+        # Callback is supported in three modes:
         # 1) last argument is a void* user_data which is passed to callback
         # 2) first argument is a struct with user_data field, which is passed to callback
+        # 3) callback ist the last argument and no user_data is passed
 
         callback_name, arg_type  = callback
         # print('/* --> callback %s ARG TYPE: %s */' % (callback_name, arg_type))
@@ -2472,6 +2473,9 @@ def build_mp_func_arg(arg, index, func, obj_name):
                 callback_name = '%s_%s' % (func.name, callback_name)
                 full_user_data = '&user_data'
                 user_data_argument = True
+            elif index == len(args) - 1:
+                callback_name = '%s_%s' % (func.name, callback_name)
+                full_user_data = 'NULL'
             else:
                 first_arg = args[0]
                 struct_name = get_name(first_arg.type.type.type if hasattr(first_arg.type.type,'type') else first_arg.type.type)
@@ -2493,14 +2497,14 @@ def build_mp_func_arg(arg, index, func, obj_name):
             arg_metadata = {'type': 'callback', 'function': callback_metadata[callback_name]}
             if arg.name: arg_metadata['name'] = arg.name
             func_metadata[func.name]['args'].append(arg_metadata)
-            return 'void *{arg_name} = mp_lv_callback(mp_args[{i}], &{callback_name}_callback, MP_QSTR_{callback_name}, {full_user_data}, {containing_struct}, (mp_lv_get_user_data){user_data_getter}, (mp_lv_set_user_data){user_data_setter});'.format(
+            return 'void *{arg_name} = mp_lv_callback(mp_args[{i}], &{callback_name}_callback, MP_QSTR_{callback_name}, {full_user_data}, {containing_struct}, {user_data_getter_cast}, {user_data_setter_cast});'.format(
                 i = index,
                 arg_name = fixed_arg.name,
                 callback_name = sanitize(callback_name),
                 full_user_data = full_user_data,
                 containing_struct = first_arg.name if user_data_getter and user_data_setter else "NULL",
-                user_data_getter = user_data_getter.name if user_data_getter else 'NULL',
-                user_data_setter = user_data_setter.name if user_data_setter else 'NULL')
+                user_data_getter_cast = ('(mp_lv_get_user_data)' + user_data_getter.name) if user_data_getter else 'NULL',
+                user_data_setter_cast = ('(mp_lv_set_user_data)' + user_data_setter.name) if user_data_setter else 'NULL')
         except MissingConversionException as exp:
             gen_func_error(arg, exp)
             callback_name = 'NULL'
